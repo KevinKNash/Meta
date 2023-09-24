@@ -1,0 +1,174 @@
+#import talib
+import pandas as pd
+import tradehull
+import time
+import datetime
+import pdb
+import pandas_ta as ta
+#import xlwings as xw
+
+TH = tradehull.Tradehull("ob5b7m8avu3zui3c","jjz32rmgomnfuz6fh7ylxxwi25ttox5r","yes")
+#TH = tradehull.Tradehull("i355zi7jjersdbyv", "uk916g5cfy7llikhxxfs6fdm5zxx414f", "yes")
+kite = TH.kite
+print("\n\n")
+
+
+
+# ce_delta = TH.get_option_greek(strike = 45000, expiry_date = "2022-07-13", asset = "NIFTY BANK", interest_rate = 10, flag = "delta", scrip_type = "CE")
+
+# print(ce_delta)
+# pdp.set_trace()
+
+
+watchlist = ['ADANIPORTS', 'ADANIENT', 'SBIN', 'TATASTEEL', 'BAJAJFINSV', 'HDFC', 'RELIANCE', 'INFY', 'TCS', 'JSWSTEEL', 'LT', 'HCLTECH', 'TECHM', 'HDFCBANK', 'NTPC', 'BHARTIARTL', 'WIPRO', 'BAJFINANCE', 'INDUSINDBK', 'KOTAKBANK', 'HINDALCO', 'ULTRACEMCO', 'HDFCLIFE', 'BPCL', 'CIPLA', 'TATAMOTORS', 'AXISBANK', 'M&M', 'MARUTI', 'HEROMOTOCO', 'DRREDDY', 'EICHERMOT', 'COALINDIA', 'TITAN', 'UPL', 'HINDUNILVR', 'ITC', 'NESTLEIND', 'APOLLOHOSP', 'ICICIBANK', 'TATACONSUM', 'GRASIM', 'SUNPHARMA', 'BRITANNIA', 'BAJAJ-AUTO', 'ASIANPAINT', 'DIVISLAB', 'POWERGRID', 'SBILIFE', 'ONGC']
+tradedlist = []
+tradelistfo = []
+tradelistfno = []
+
+# 1. data = TH.get_fut_scripts("ACC")
+# 2. lot = TH.get_lot_size("AARTIIND22JULFUT")
+# 3. chnage nfo in order placement
+
+# 4. atm_name = TH.get_atm(ltp=ltp,underlying=name,expiry=0,script_type="CE")
+# 5. atm_ltp =  TH.get_data_for_single_script("NFO", atm_name, "ltp")
+# 6. ordert type.. kite.ORDER_TYPE_LIMIT
+
+
+start_time = datetime.time(3, 00)
+while True:
+    current_time = datetime.datetime.now().time()
+    time.sleep(0.5)
+
+    if  current_time < start_time:
+        print("Wait for the market to start", current_time)
+        continue
+    
+    for stock_name in watchlist:      
+      
+      ohlc = TH.get_data_for_single_script("NSE", stock_name, "ohlc")
+#     ltp = TH.get_data_for_single_script("NSE", stock_name, "ltp")
+      
+      stock_ltp = TH.get_data_for_single_script("NSE", stock_name, "ltp")
+      atm_name = TH.get_atm(ltp=stock_ltp ,underlying=stock_name,expiry=0,script_type="CE")      
+      atm_ltp =  TH.get_data_for_single_script("NFO", atm_name, "ltp")      
+      qty = TH.get_lot_size(atm_name)
+     
+      #pdb.set_trace()
+      parent_order_id = kite.place_order(
+              variety=kite.VARIETY_AMO,
+              exchange=kite.EXCHANGE_NFO,
+              tradingsymbol=atm_name,
+              transaction_type=kite.TRANSACTION_TYPE_BUY,
+              quantity=qty,
+              product=kite.PRODUCT_MIS,
+              order_type=kite.ORDER_TYPE_LIMIT,
+              price=atm_ltp,
+              validity=None,
+              disclosed_quantity=None,
+              trigger_price=None,
+              tag=None)
+      tradelistfno.append(atm_name)
+      print("Buy", atm_name, atm_ltp, qty, parent_order_id)
+     
+
+    # for fut_name in watchlist:
+    #     data = TH.get_fut_scripts(fut_name)
+    #     futname = data[0]
+    #     qty = TH.get_lot_size(futname)
+    #     ohlc = TH.get_data_for_single_script("NFO", futname, "ohlc")
+    #     ltp = TH.get_data_for_single_script("NFO", futname, "ltp")
+    #     #pdb.set_trace()
+    #     parent_order_id = kite.place_order(
+    #             variety=kite.VARIETY_AMO,
+    #             exchange=kite.EXCHANGE_NFO,
+    #             tradingsymbol=futname,
+    #             transaction_type=kite.TRANSACTION_TYPE_BUY,
+    #             quantity=qty,
+    #             product=kite.PRODUCT_MIS,
+    #             order_type=kite.ORDER_TYPE_MARKET,
+    #             price=None,
+    #             validity=None,
+    #             disclosed_quantity=None,
+    #             trigger_price=None,
+    #             tag=None)
+    #     tradelistfo.append(futname)
+    #     print("SELL", futname, ltp, qty, parent_order_id)
+      
+    # for stock_name in watchlist:
+    #     ohlc = TH.get_data_for_single_script("NSE", stock_name, "ohlc")
+    #     ltp = TH.get_data_for_single_script("NSE", stock_name, "ltp")
+    #     qty = round(100000 / ltp)
+    #     close = ohlc['close']
+    #     upper_buffer = round(close * 1.01, 1)
+    #     lower_buffer = round(close * 0.99, 1)
+        
+        
+        
+      
+        
+
+    #     if (ltp > upper_buffer) and (stock_name not in tradedlist) and (len(tradedlist) < 4):
+    #         parent_order_id = kite.place_order(
+    #             variety=kite.VARIETY_AMO,
+    #             exchange=kite.EXCHANGE_NSE,
+    #             tradingsymbol=stock_name,
+    #             transaction_type=kite.TRANSACTION_TYPE_BUY,
+    #             quantity=qty,
+    #             product=kite.PRODUCT_MIS,
+    #             order_type=kite.ORDER_TYPE_MARKET,
+    #             price=None,
+    #             validity=None,
+    #             disclosed_quantity=None,
+    #             trigger_price=None,
+    #             tag=None
+    #         )
+    #         # stoploss_price = round(ltp * 0.99, 1)
+    #         # stoploss_order_id = kite.place_order(
+    #         #     variety=kite.VARIETY_AMO,
+    #         #     exchange=kite.EXCHANGE_NSE,
+    #         #     tradingsymbol=stock_name,
+    #         #     transaction_type=kite.TRANSACTION_TYPE_SELL,
+    #         #     quantity=qty,
+    #         #     product=kite.PRODUCT_MIS,
+    #         #     order_type=kite.ORDER_TYPE_SLM,
+    #         #     price=None,
+    #         #     validity=None,
+    #         #     disclosed_quantity=None,
+    #         #     trigger_price=stoploss_price,
+    #         #     tag=None
+    #         # )
+    #         tradedlist.append(stock_name)
+    #         print("BUY", stock_name, ltp, qty, parent_order_id, stoploss_order_id)
+
+    #     if (ltp < lower_buffer) and (stock_name not in tradedlist) and (len(tradedlist) < 4):
+    #         parent_order_id = kite.place_order(
+    #             variety=kite.VARIETY_AMO,
+    #             exchange=kite.EXCHANGE_NSE,
+    #             tradingsymbol=stock_name,
+    #             transaction_type=kite.TRANSACTION_TYPE_SELL,
+    #             quantity=qty,
+    #             product=kite.PRODUCT_MIS,
+    #             order_type=kite.ORDER_TYPE_MARKET,
+    #             price=None,
+    #             validity=None,
+    #             disclosed_quantity=None,
+    #             trigger_price=None,
+    #             tag=None
+    #         )
+    #         # stoploss_price = round(ltp * 1.05, 1)
+    #         # stoploss_order_id = kite.place_order(
+    #         #     variety=kite.VARIETY_AMO,
+    #         #     exchange=kite.EXCHANGE_NSE,
+    #         #     tradingsymbol=stock_name,
+    #         #     transaction_type=kite.TRANSACTION_TYPE_BUY,
+    #         #     quantity=qty,
+    #         #     product=kite.PRODUCT_MIS,
+    #         #     order_type=kite.ORDER_TYPE_SLM,
+    #         #     price=None,
+    #         #     validity=None,
+    #         #     disclosed_quantity=None,
+    #         #     trigger_price=stoploss_price,
+    #         #     tag=None
+    #         # )
+    #         tradedlist.append(stock_name)
+    #         print("SELL", stock_name, ltp, qty, parent_order_id, stoploss_order_id)
